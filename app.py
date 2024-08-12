@@ -73,26 +73,34 @@ def load_t5_model():
 
 @torch.no_grad()
 async def generate_summary_async(input_text, tokenizer, model, max_length=150, is_augmented=False):
-    if is_augmented:
-        prefix = "Generate a comprehensive summary of the following text and additional context: "
-        max_length = 250  # Increase max length for augmented summary
-    else:
-        prefix = "Summarize the following text: "
-    
-    input_text = prefix + input_text.strip().replace("\n", " ")
-    input_ids = tokenizer.encode(input_text, return_tensors="pt", max_length=512, truncation=True)
-    summary_ids = await asyncio.to_thread(model.generate,
-                                          input_ids,
-                                          num_beams=4,
-                                          no_repeat_ngram_size=2,
-                                          min_length=50,
-                                          max_length=max_length,
-                                          early_stopping=True,
-                                          do_sample=True,
-                                          top_k=50,
-                                          temperature=0.7)
-    summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-    return summary
+  if is_augmented:
+      prefix = "Generate a comprehensive summary of the following text and additional context: "
+      max_length = 250  # Increase max length for augmented summary
+  else:
+      prefix = "Summarize the following text: "
+  
+  input_text = prefix + input_text.strip().replace("\n", " ")
+  input_ids = tokenizer.encode(input_text, return_tensors="pt", max_length=512, truncation=True)
+  
+  try:
+      summary_ids = await asyncio.to_thread(model.generate,
+                                            input_ids,
+                                            num_beams=4,
+                                            no_repeat_ngram_size=2,
+                                            min_length=30,
+                                            max_length=max_length,
+                                            early_stopping=True,
+                                            do_sample=False,  # Changed to False for more stable output
+                                            temperature=1.0,  # Neutral temperature
+                                            top_p=0.95,  # Use top_p instead of top_k
+                                            bad_words_ids=[[tokenizer.unk_token_id]]  # Avoid generating unknown tokens
+                                            )
+      summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+  except RuntimeError as e:
+      print(f"Error during summary generation: {e}")
+      summary = "Error: Unable to generate summary due to numerical instability."
+  
+  return summary
 
 # Step 4: Evaluation Metrics
 
