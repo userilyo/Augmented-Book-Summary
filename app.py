@@ -108,7 +108,7 @@ async def evaluate_summary_async(predicted_summary, reference_summary):
 # Step 5: Streamlit Interface
 
 async def main():
-    st.title("📚 Augmented LLM Summarizer with RAG")
+    st.title("📚 Augmented Books Summarizer")
 
     st.markdown("""
     This application uses a Retrieval-Augmented Generation (RAG) pipeline to produce enhanced book summaries. 
